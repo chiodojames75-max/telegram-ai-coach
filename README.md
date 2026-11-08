@@ -41,6 +41,7 @@ All of the bots run from one Python process and share one deployment.
 
 ## Commands
 
+- `/start`: register this chat for the daily brief (assistant)
 - `/brief`: send the morning brief now (assistant)
 - `/calendar`: add study blocks for upcoming assignments (assistant)
 - `/start`: welcome message (coaching bots)
@@ -56,7 +57,7 @@ All of the bots run from one Python process and share one deployment.
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q        # 8 tests; every outside service is faked
+python -m pytest -q        # 9 tests; every outside service is faked
 python main.py
 ```
 

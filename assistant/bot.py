@@ -9,6 +9,25 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 
 from . import brief, calendar_builder, canvas
 
+CHAT_FILE = os.environ.get("BRIEF_CHAT_FILE", "brief_chat.txt")
+
+
+def brief_chat_id():
+    """The chat that gets the daily brief: BRIEF_CHAT_ID, or whoever last sent /start."""
+    if os.environ.get("BRIEF_CHAT_ID"):
+        return int(os.environ["BRIEF_CHAT_ID"])
+    if os.path.exists(CHAT_FILE):
+        return int(open(CHAT_FILE).read().strip())
+    return None
+
+
+async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    with open(CHAT_FILE, "w") as f:
+        f.write(str(update.effective_chat.id))
+    hh = os.environ.get("BRIEF_TIME", "07:30")
+    await update.message.reply_text(f"Assistant online. Your morning brief will come here every day at {hh}. "
+                                    "Send /brief for one now, or /calendar to add study blocks.")
+
 
 async def _send_brief(bot, chat_id: int):
     data = await asyncio.to_thread(brief.gather)
@@ -31,15 +50,17 @@ async def calendar_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def morning_job(context: ContextTypes.DEFAULT_TYPE):
-    await _send_brief(context.bot, int(os.environ["BRIEF_CHAT_ID"]))
+    chat_id = brief_chat_id()
+    if chat_id:
+        await _send_brief(context.bot, chat_id)
 
 
 def attach(app: Application):
     """Add the assistant's commands to a Telegram app and schedule the daily brief."""
+    app.add_handler(CommandHandler("start", start_cmd))
     app.add_handler(CommandHandler("brief", brief_cmd))
     app.add_handler(CommandHandler("calendar", calendar_cmd))
-    chat_id = os.environ.get("BRIEF_CHAT_ID")
-    if chat_id and app.job_queue:
+    if app.job_queue:
         hh, mm = os.environ.get("BRIEF_TIME", "07:30").split(":")
         tz = ZoneInfo(os.environ.get("BRIEF_TZ", "America/New_York"))
         app.job_queue.run_daily(morning_job, time=time(int(hh), int(mm), tzinfo=tz), name="morning_brief")

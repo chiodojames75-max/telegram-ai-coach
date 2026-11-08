@@ -119,6 +119,15 @@ def test_assistant_bot_registers_commands_and_daily_job(monkeypatch):
     app = ApplicationBuilder().token("1:a").build()
     bot.attach(app)
     cmds = {c for h in app.handlers[0] for c in h.commands}
-    assert {"brief", "calendar"} <= cmds
+    assert {"start", "brief", "calendar"} <= cmds
     job = app.job_queue.jobs()
     assert len(job) == 0 or job[0].name == "morning_brief"  # jobs list fills once the app starts
+
+
+def test_brief_chat_id_comes_from_start(tmp_path, monkeypatch):
+    from assistant import bot
+    monkeypatch.delenv("BRIEF_CHAT_ID", raising=False)
+    monkeypatch.setattr(bot, "CHAT_FILE", str(tmp_path / "chat.txt"))
+    assert bot.brief_chat_id() is None
+    (tmp_path / "chat.txt").write_text("4242")
+    assert bot.brief_chat_id() == 4242
