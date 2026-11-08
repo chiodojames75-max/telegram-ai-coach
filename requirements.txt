@@ -1,2 +1,7 @@
-python-telegram-bot==21.6
+python-telegram-bot[job-queue]==21.6
 anthropic>=0.40
+requests>=2.31
+google-api-python-client>=2.100
+google-auth-oauthlib>=1.2
+msal>=1.28
+pytest>=8

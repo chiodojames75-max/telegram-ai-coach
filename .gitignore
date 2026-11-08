@@ -5,3 +5,6 @@ prompts/*.md
 __pycache__/
 *.pyc
 .DS_Store
+google_credentials.json
+*_token.json
+.pytest_cache/

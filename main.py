@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 from telegram import Update
+from assistant import bot as assistant_bot
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import anthropic
 
@@ -14,6 +15,7 @@ LIFTING_TOKEN   = os.environ.get("LIFTING_TOKEN")
 NUTRITION_TOKEN = os.environ.get("NUTRITION_TOKEN")
 ACADEMIC_TOKEN  = os.environ.get("ACADEMIC_TOKEN")
 HABIT_TOKEN     = os.environ.get("HABIT_TOKEN")
+ASSISTANT_TOKEN = os.environ.get("ASSISTANT_TOKEN")  # optional: morning-brief assistant
 
 REQUIRED = ["ANTHROPIC_API_KEY", "LIFTING_TOKEN", "NUTRITION_TOKEN", "ACADEMIC_TOKEN", "HABIT_TOKEN"]
 
@@ -167,31 +169,27 @@ async def main():
         "📅 Habit Tracker online! Check in with me every morning and night. I'll track your habits, keep you accountable, and help you stay consistent. Type /clear to reset memory."
     )
 
+    apps = [lifting_app, nutrition_app, academic_app, habit_app]
+
+    if ASSISTANT_TOKEN:
+        assistant_app = ApplicationBuilder().token(ASSISTANT_TOKEN).build()
+        assistant_bot.attach(assistant_app)
+        apps.append(assistant_app)
+
     # Start all bots concurrently
-    async with lifting_app, nutrition_app, academic_app, habit_app:
-        await lifting_app.initialize()
-        await nutrition_app.initialize()
-        await academic_app.initialize()
-        await habit_app.initialize()
+    for app in apps:
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling()
 
-        await lifting_app.start()
-        await nutrition_app.start()
-        await academic_app.start()
-        await habit_app.start()
-
-        await lifting_app.updater.start_polling()
-        await nutrition_app.updater.start_polling()
-        await academic_app.updater.start_polling()
-        await habit_app.updater.start_polling()
-
-        print("✅ All 4 bots are running!")
-        print("💪 Lifting Bot — active")
-        print("🥗 Nutrition Bot — active")
-        print("📚 Academic Bot — active")
-        print("📅 Habit Tracker — active")
-
-        # Run forever
+    print(f"All {len(apps)} bots are running" + (" (including the morning-brief assistant)" if ASSISTANT_TOKEN else ""))
+    try:
         await asyncio.Event().wait()
+    finally:
+        for app in apps:
+            await app.updater.stop()
+            await app.stop()
+            await app.shutdown()
 
 if __name__ == "__main__":
     check_config()
