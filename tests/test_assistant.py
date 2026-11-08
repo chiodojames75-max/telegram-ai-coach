@@ -11,6 +11,7 @@ from assistant import brief, calendar_builder, canvas, gmail, outlook
 class FakeResp:
     def __init__(self, payload):
         self.payload = payload
+        self.text = payload if isinstance(payload, str) else ""
 
     def raise_for_status(self):
         pass
@@ -131,3 +132,34 @@ def test_brief_chat_id_comes_from_start(tmp_path, monkeypatch):
     assert bot.brief_chat_id() is None
     (tmp_path / "chat.txt").write_text("4242")
     assert bot.brief_chat_id() == 4242
+
+
+ICS = """BEGIN:VCALENDAR
+BEGIN:VEVENT
+DTSTART:{soon}
+SUMMARY:Problem Set 4 [ECON 104 Section 4]
+URL;VALUE=URI:https://psu.instructure.com/courses/1/assignments/9
+END:VEVENT
+BEGIN:VEVENT
+DTSTART;VALUE=DATE:{later}
+SUMMARY:Chapter 9 Quiz [MKTG 301]
+URL;VALUE=URI:https://psu.instructure.com/courses/2/assignments/3
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20200101T120000Z
+SUMMARY:Old thing [X]
+END:VEVENT
+END:VCALENDAR"""
+
+
+def test_canvas_calendar_feed_works_without_a_token(monkeypatch):
+    from datetime import timedelta
+    monkeypatch.delenv("CANVAS_TOKEN", raising=False)
+    monkeypatch.setenv("CANVAS_ICS_URL", "https://psu.instructure.com/feeds/calendars/user_x.ics")
+    now = datetime.now(timezone.utc)
+    feed = ICS.format(soon=(now + timedelta(days=1)).strftime("%Y%m%dT%H%M%SZ"),
+                      later=(now + timedelta(days=3)).strftime("%Y%m%d"))
+    assert canvas.configured()
+    out = canvas.upcoming_assignments(session=FakeSession(feed))
+    assert [(a["course"], a["title"]) for a in out] == [("ECON 104 Section 4", "Problem Set 4"), ("MKTG 301", "Chapter 9 Quiz")]
+    assert out[0]["url"].endswith("/assignments/9")

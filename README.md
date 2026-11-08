@@ -14,7 +14,7 @@ Every morning it texts me a short brief written by Claude:
 
 | Source | How it connects |
 |---|---|
-| Canvas | Canvas REST API with a personal access token |
+| Canvas | Canvas calendar feed, or the Canvas REST API with an access token |
 | Gmail | Gmail API, read-only, Google sign-in |
 | Outlook | Microsoft Graph, read-only, Microsoft sign-in |
 | Google Calendar | Calendar API, creates events only |
@@ -52,12 +52,12 @@ All of the bots run from one Python process and share one deployment.
 1. Create four bots with [@BotFather](https://t.me/BotFather) on Telegram and copy each token.
 2. Get an Anthropic API key at [console.anthropic.com](https://console.anthropic.com).
 3. Copy `prompts/example/*.md` into `prompts/` and fill in your own details. Your filled-in prompts are git-ignored, so personal info never gets committed.
-4. For the morning brief: any coaching bot without a token is simply skipped, so you can run just the assistant. Then create a fifth bot for `ASSISTANT_TOKEN`, add a Canvas access token, an Azure app ID for Outlook, and a Google OAuth desktop client saved as `google_credentials.json`. The first run asks you to sign in to Google and Microsoft once; after that the sign-ins are cached locally and never committed.
+4. For the morning brief: any coaching bot without a token is simply skipped, so you can run just the assistant. Then create a fifth bot for `ASSISTANT_TOKEN`, add your Canvas calendar feed link (or an access token), an Azure app ID for Outlook, and a Google OAuth desktop client saved as `google_credentials.json`. The first run asks you to sign in to Google and Microsoft once; after that the sign-ins are cached locally and never committed.
 5. Set the variables from `.env.example`, then run:
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q        # 9 tests; every outside service is faked
+python -m pytest -q        # 10 tests; every outside service is faked
 python main.py
 ```
 
