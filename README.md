@@ -1,5 +1,7 @@
 # Telegram AI Coach
 
+![tests](https://github.com/chiodojames75-max/telegram-ai-coach/actions/workflows/tests.yml/badge.svg)
+
 Personal AI assistants on Telegram, powered by the Claude API: a morning-brief assistant connected to Canvas, Gmail, Outlook and Google Calendar, plus four coaching bots that each keep their own memory.
 
 ## Morning-brief assistant
