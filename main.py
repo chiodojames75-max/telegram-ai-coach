@@ -17,12 +17,13 @@ ACADEMIC_TOKEN  = os.environ.get("ACADEMIC_TOKEN")
 HABIT_TOKEN     = os.environ.get("HABIT_TOKEN")
 ASSISTANT_TOKEN = os.environ.get("ASSISTANT_TOKEN")  # optional: morning-brief assistant
 
-REQUIRED = ["ANTHROPIC_API_KEY", "LIFTING_TOKEN", "NUTRITION_TOKEN", "ACADEMIC_TOKEN", "HABIT_TOKEN"]
+BOT_TOKENS = ["LIFTING_TOKEN", "NUTRITION_TOKEN", "ACADEMIC_TOKEN", "HABIT_TOKEN", "ASSISTANT_TOKEN"]
 
 def check_config():
-    missing = [k for k in REQUIRED if not os.environ.get(k)]
-    if missing:
-        raise SystemExit("Missing environment variables: " + ", ".join(missing) + " (see .env.example)")
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise SystemExit("Missing ANTHROPIC_API_KEY (see .env.example)")
+    if not any(os.environ.get(k) for k in BOT_TOKENS):
+        raise SystemExit("Add at least one bot token: " + ", ".join(BOT_TOKENS) + " (see .env.example)")
 
 # ─────────────────────────────────────────────
 # MEMORY SYSTEM — saves everything to a JSON file
@@ -148,28 +149,18 @@ def build_bot(token: str, bot_name: str, system_prompt: str, welcome: str):
 # RUN ALL BOTS AT THE SAME TIME
 # ─────────────────────────────────────────────
 async def main():
-    lifting_app = build_bot(
-        LIFTING_TOKEN, "lifting",
-        LIFTING_SYSTEM,
-        "💪 Lifting Bot online! Tell me about your workout, ask about your program, or log your lifts. Type /clear to reset memory."
-    )
-    nutrition_app = build_bot(
-        NUTRITION_TOKEN, "nutrition",
-        NUTRITION_SYSTEM,
-        "🥗 Nutrition Bot online! Tell me what you've eaten today and I'll track your macros, or ask me what to eat next. Type /clear to reset memory."
-    )
-    academic_app = build_bot(
-        ACADEMIC_TOKEN, "academic",
-        ACADEMIC_SYSTEM,
-        "📚 Academic Bot online! Ask me to explain a concept, help with an essay, or track a deadline. Type /clear to reset memory."
-    )
-    habit_app = build_bot(
-        HABIT_TOKEN, "habit",
-        HABIT_SYSTEM,
-        "📅 Habit Tracker online! Check in with me every morning and night. I'll track your habits, keep you accountable, and help you stay consistent. Type /clear to reset memory."
-    )
-
-    apps = [lifting_app, nutrition_app, academic_app, habit_app]
+    bots = [
+        (LIFTING_TOKEN, "lifting", LIFTING_SYSTEM,
+         "💪 Lifting Bot online! Tell me about your workout, ask about your program, or log your lifts. Type /clear to reset memory."),
+        (NUTRITION_TOKEN, "nutrition", NUTRITION_SYSTEM,
+         "🥗 Nutrition Bot online! Tell me what you've eaten today and I'll track your macros, or ask me what to eat next. Type /clear to reset memory."),
+        (ACADEMIC_TOKEN, "academic", ACADEMIC_SYSTEM,
+         "📚 Academic Bot online! Ask me to explain a concept, help with an essay, or track a deadline. Type /clear to reset memory."),
+        (HABIT_TOKEN, "habit", HABIT_SYSTEM,
+         "📅 Habit Tracker online! Check in with me every morning and night. I'll track your habits, keep you accountable, and help you stay consistent. Type /clear to reset memory."),
+    ]
+    # only start the bots that have a token, so you can run just the assistant
+    apps = [build_bot(token, name, prompt, welcome) for token, name, prompt, welcome in bots if token]
 
     if ASSISTANT_TOKEN:
         assistant_app = ApplicationBuilder().token(ASSISTANT_TOKEN).build()
@@ -182,7 +173,7 @@ async def main():
         await app.start()
         await app.updater.start_polling()
 
-    print(f"All {len(apps)} bots are running" + (" (including the morning-brief assistant)" if ASSISTANT_TOKEN else ""))
+    print(f"{len(apps)} bot(s) running" + (" (including the morning-brief assistant)" if ASSISTANT_TOKEN else ""))
     try:
         await asyncio.Event().wait()
     finally:

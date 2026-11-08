@@ -52,7 +52,7 @@ All of the bots run from one Python process and share one deployment.
 1. Create four bots with [@BotFather](https://t.me/BotFather) on Telegram and copy each token.
 2. Get an Anthropic API key at [console.anthropic.com](https://console.anthropic.com).
 3. Copy `prompts/example/*.md` into `prompts/` and fill in your own details. Your filled-in prompts are git-ignored, so personal info never gets committed.
-4. For the morning brief (optional): create a fifth bot for `ASSISTANT_TOKEN`, add a Canvas access token, an Azure app ID for Outlook, and a Google OAuth desktop client saved as `google_credentials.json`. The first run asks you to sign in to Google and Microsoft once; after that the sign-ins are cached locally and never committed.
+4. For the morning brief: any coaching bot without a token is simply skipped, so you can run just the assistant. Then create a fifth bot for `ASSISTANT_TOKEN`, add a Canvas access token, an Azure app ID for Outlook, and a Google OAuth desktop client saved as `google_credentials.json`. The first run asks you to sign in to Google and Microsoft once; after that the sign-ins are cached locally and never committed.
 5. Set the variables from `.env.example`, then run:
 
 ```bash
